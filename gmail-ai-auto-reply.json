@@ -3,11 +3,37 @@
   "nodes": [
     {
       "parameters": {
+        "jsonSchemaExample": "{\n  \"summary\": \"string\",\n  \"category\": \"string\",\n  \"priority\": \"string\",\n  \"action_required\": true,\n  \"reply_needed\": true,\n  \"action_items\": [\n    \"string\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        112,
+        128
+      ],
+      "id": "c2fef747-7d99-4f62-b4f6-12106a9e375a",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"reply_body\": \"string\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        128
+      ],
+      "id": "14d056d0-5135-425a-bfb5-05e697e5023a",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
         "promptType": "define",
-        "text": "=Email Subject:\n{{ $json.Subject }}\n\nSender:\n{{ $json.From }}\n\nEmail Body:\n{{ $json.snippet }}\n\nAnalyze the email and generate the response in the specified JSON format.\n",
+        "text": "=Email Subject:\n{{ $json.Subject }}\n\nSender:\n{{ $json.From }}\n\nEmail Body:\n{{ $json.snippet }}\n\nAnalyze the email and return valid JSON only using the specified format.\n\nDo not include markdown.\nDo not include explanations.\nDo not include additional text outside the JSON response.\n",
         "hasOutputParser": true,
         "options": {
-          "systemMessage": "=You are an intelligent email summarization assistant.\n\nYour task is to analyze email content and generate a concise, professional summary.\n\nInstructions:\n\n1. Identify the main purpose of the email.\n2. Extract important details, requests, deadlines, dates, and action items.\n3. Ignore signatures, disclaimers, and unnecessary formatting.\n4. Keep the summary under 100 words.\n5. Determine the email category:\n\n   * Work\n   * Personal\n   * Promotion\n   * Support\n   * Finance\n   * Recruitment\n   * Newsletter\n   * Other\n6. Determine the priority:\n\n   * High\n   * Medium\n   * Low\n7. Return the output in valid JSON only.\n\nOutput Format:\n{\n\"summary\": \"\",\n\"category\": \"\",\n\"priority\": \"\",\n\"action_required\": true,\n\"action_items\": []\n}\n"
+          "systemMessage": "=You are an Advanced AI Email Analysis Assistant.\n\nYour task is to analyze incoming emails and return structured JSON containing a summary, category, priority, action requirements, reply requirements, and action items.\n\nInstructions:\n\n1. Read and understand the email subject, sender, and body.\n\n2. Generate a concise summary (maximum 100 words).\n\n3. Identify the primary category from:\n\n   * Recruitment\n   * Work\n   * Support\n   * Finance\n   * Personal\n   * Promotion\n   * Newsletter\n   * System Notification\n   * Other\n\n4. Determine priority:\n\n   * High\n   * Medium\n   * Low\n\n5. Determine whether action is required:\n\n   * true\n   * false\n\n6. Determine whether a reply is needed:\n\n   * true\n   * false\n\n7. Extract clear action items as a list.\n\n8. Ignore:\n\n   * Email signatures\n   * Legal disclaimers\n   * Tracking information\n   * HTML formatting\n\n9. For the following types of emails, set reply_needed to false:\n\n   * Mail delivery failures\n   * Mailer-daemon messages\n   * Postmaster notifications\n   * OTP emails\n   * Newsletters\n   * Promotional emails\n   * Automated notifications\n   * No-reply sender emails\n\n10. Priority Rules:\n\n    * High: urgent requests, deadlines, interviews, customer issues, finance-related actions.\n    * Medium: normal business communication.\n    * Low: newsletters, promotions, informational messages.\n\n11. Never invent information not present in the email.\n\n12. Return valid JSON only.\n\nOutput Format:\n\n{\n\"summary\": \"string\",\n\"category\": \"string\",\n\"priority\": \"High | Medium | Low\",\n\"action_required\": true,\n\"reply_needed\": true,\n\"action_items\": [\"string\"]\n}\n"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -17,47 +43,14 @@
         -96
       ],
       "id": "b6538ca0-8347-4745-8de5-dda7fc3e5b53",
-      "name": "AI Agent"
-    },
-    {
-      "parameters": {
-        "jsonSchemaExample": "{\n\"summary\": \"\",\n\"category\": \"\",\n\"priority\": \"\",\n\"action_required\": true,\n\"action_items\": []\n}"
-      },
-      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
-      "typeVersion": 1.3,
-      "position": [
-        104,
-        128
-      ],
-      "id": "c2fef747-7d99-4f62-b4f6-12106a9e375a",
-      "name": "Structured Output Parser"
-    },
-    {
-      "parameters": {
-        "model": "qwen/qwen3-32b",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
-      "typeVersion": 1,
-      "position": [
-        -24,
-        128
-      ],
-      "id": "ddc62dca-bab2-48fa-bcc2-2c2c6bea9077",
-      "name": "Groq Chat Model",
-      "credentials": {
-        "groqApi": {
-          "id": "mO7xqxCA2M8kbYP4",
-          "name": "Groq account"
-        }
-      }
+      "name": "Categorize Mail"
     },
     {
       "parameters": {
         "operation": "reply",
-        "messageId": "={{ $('Gmail Trigger1').item.json.id }}",
+        "messageId": "={{ $('Get many messages').item.json.id }}",
         "emailType": "text",
-        "message": "={{ $json.output.summary }}",
+        "message": "={{ $json.output.reply_body }}",
         "options": {}
       },
       "type": "n8n-nodes-base.gmail",
@@ -67,7 +60,7 @@
         -96
       ],
       "id": "cc0e9a7d-7fe3-4c75-95b8-74612bf718e5",
-      "name": "Reply to a message",
+      "name": "Sending Back Message",
       "webhookId": "0ce02b66-3b97-4423-bbc1-d7ce41ff6f95",
       "credentials": {
         "gmailOAuth2": {
@@ -75,57 +68,6 @@
           "name": "Gmail account"
         }
       }
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "=Original Subject:\n{{ $('Gmail Trigger1').item.json.Subject }}\n\nSender:\n{{ $('Gmail Trigger1').item.json.From }}\n\nEmail Summary:\n{{ $json.output.summary }}\n\nCategory:\n{{ $json.output.category }}\n\nPriority:\n{{ $json.output.priority }}\n\nAction Required:\n{{ $json.output.action_required }}\n\nAction Items:\n{{ $json.output.action_items }}\nGenerate a professional email response.\n",
-        "hasOutputParser": true,
-        "options": {
-          "systemMessage": "You are a helpYou are a professional email assistant.\n\nYour task is to generate a clear, polite, and professional email reply based on the provided email summary.\n\nRules:\n\n1. Maintain a professional and respectful tone.\n2. Acknowledge the sender's message.\n3. Address all important points mentioned in the summary.\n4. If action is required, clearly mention the next steps.\n5. Keep the response concise and business appropriate.\n6. Do not invent facts that are not present in the summary.\n7. Generate only the email body.\n8. Do not include placeholders unless information is missing.\n9. End with a professional closing.\n\nThe output should be ready to send as an email.\nful assistant"
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 3.1,
-      "position": [
-        320,
-        -96
-      ],
-      "id": "bfbfdba0-9b66-465e-a6f7-d2088e8cfffd",
-      "name": "AI Agent1"
-    },
-    {
-      "parameters": {
-        "model": "qwen/qwen3-32b",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
-      "typeVersion": 1,
-      "position": [
-        328,
-        128
-      ],
-      "id": "d7ab7b7c-20cb-47f2-9b90-7a153ba966e3",
-      "name": "Groq Chat Model1",
-      "credentials": {
-        "groqApi": {
-          "id": "mO7xqxCA2M8kbYP4",
-          "name": "Groq account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsonSchemaExample": "{\n  \"summary\": \"\",\n  \"category\": \"\",\n  \"priority\": \"\",\n  \"action_required\": true,\n  \"action_items\": []\n}"
-      },
-      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
-      "typeVersion": 1.3,
-      "position": [
-        456,
-        128
-      ],
-      "id": "14d056d0-5135-425a-bfb5-05e697e5023a",
-      "name": "Structured Output Parser1"
     },
     {
       "parameters": {
@@ -147,12 +89,12 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "Sender Name": "={{ $('Gmail Trigger1').item.json.From.split('<')[0].trim() }}",
-            "Sender Mail": "={{ $('Gmail Trigger1').item.json.From }}",
-            "Message Recieved": "={{ $('Gmail Trigger1').item.json.snippet }}",
-            "Message Replied": "={{ $('AI Agent1').item.json.output.summary }}",
-            "Subject": "={{ $('Gmail Trigger1').item.json.Subject }}",
-            "Category": "={{ $('AI Agent1').item.json.output.category }}"
+            "Sender Name": "={{ $('Get many messages').item.json.From.split('<')[0].trim() }} ",
+            "Sender Mail": "={{ $('Get many messages').item.json.To }}",
+            "Message Recieved": "={{ $('Get many messages').item.json.snippet }}",
+            "Message Replied": "={{ $('Generating Meaningfull Reply').item.json.output.reply_body }}",
+            "Subject": "={{ $('Get many messages').item.json.Subject }}",
+            "Category": "={{ $('Categorize Mail').item.json.output.category }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -221,11 +163,11 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        880,
+        896,
         -96
       ],
       "id": "55af66c3-4b7a-4861-a59a-d7f263baa139",
-      "name": "Append row in sheet",
+      "name": "Appending New Data",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "oEJXqtGuKJUGe9kz",
@@ -235,27 +177,79 @@
     },
     {
       "parameters": {
-        "pollTimes": {
-          "item": [
-            {
-              "mode": "everyMinute"
-            }
-          ]
-        },
+        "operation": "getAll",
+        "limit": 10,
         "filters": {}
       },
-      "type": "n8n-nodes-base.gmailTrigger",
-      "typeVersion": 1.3,
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
       "position": [
         -256,
         -96
       ],
-      "id": "d5df08d3-8297-45e9-a461-5eaf7975fdf2",
-      "name": "Gmail Trigger1",
+      "id": "0f9719b4-42f9-4c70-920c-4719dbbe76fe",
+      "name": "Get many messages",
+      "webhookId": "49210bf6-1ca0-46bc-84dc-d3ff7c12031d",
       "credentials": {
         "gmailOAuth2": {
           "id": "RMJitH1jvoq8IpGM",
           "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Original Subject:\n{{ $('Get many messages').item.json.Subject }}\n\nSender:\n{{ $('Get many messages').item.json.From }}\n\nEmail Summary:\n{{ $json.output.summary }}\n\nCategory:\n{{ $json.output.category }}\n\nPriority:\n{{ $json.output.priority }}\n\nAction Required:\n{{ $json.output.action_required }}\n\nReply Needed:\n{{ $json.output.reply_needed }}\n\nAction Items:\n{{ JSON.stringify($json.output.action_items) }}\n\nGenerate a professional email response based on the information above.\n\nRequirements:\n\n* Acknowledge the sender.\n* Address all relevant points.\n* Include next steps if action is required.\n* Match the category and priority.\n* Be ready to send immediately.\n* Return valid JSON only.\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an Advanced AI Email Response Assistant.\n\nYour task is to generate professional, context-aware, and business-appropriate email replies based on the structured email analysis provided.\n\nInstructions:\n\n1. Analyze the email summary, category, priority, and action items.\n\n2. Generate a professional and meaningful response for every email received.\n\n3. Acknowledge the sender naturally and appropriately.\n\n4. Address all key points from the summary.\n\n5. If action is required, clearly communicate the next steps.\n\n6. Match the response tone to the category:\n\n   * Recruitment → Professional and enthusiastic.\n   * Support → Helpful and solution-oriented.\n   * Finance → Formal and precise.\n   * Work → Collaborative and professional.\n   * Personal → Friendly and respectful.\n   * Promotion → Courteous acknowledgment.\n   * Newsletter → Professional appreciation.\n   * System Notification → Brief acknowledgment.\n\n7. Never invent information that is not present in the email analysis.\n\n8. Never reveal internal reasoning, chain-of-thought, or analysis.\n\n9. Never mention that you are an AI assistant.\n\n10. Keep responses concise and relevant.\n\n11. Avoid repetitive phrases.\n\n12. Generate only the email body content.\n\n13. Always include the following signature:\n\nBest regards,\n\nDeepak Takshak\nAI Engineer\nJosh Technology Group\n\n14. If insufficient information is available, generate a polite acknowledgment and indicate that the message has been received.\n\n15. Return valid JSON only.\n\nOutput Format:\n\n{\n\"reply_body\": \"string\"\n}\n\nDo not include markdown.\nDo not include code blocks.\nDo not include explanations.\nDo not include any fields other than reply_body.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        320,
+        -96
+      ],
+      "id": "bfbfdba0-9b66-465e-a6f7-d2088e8cfffd",
+      "name": "Generating Meaningfull Reply"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        320,
+        112
+      ],
+      "id": "adf4799d-b65f-4841-8736-28c9a20f7f6e",
+      "name": "Cohere Chat Model",
+      "credentials": {
+        "cohereApi": {
+          "id": "7K7QWrIfycgT1qxy",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        128
+      ],
+      "id": "f8c91511-ac4b-499e-b1c7-37f01d771318",
+      "name": "Cohere Chat Model1",
+      "credentials": {
+        "cohereApi": {
+          "id": "7K7QWrIfycgT1qxy",
+          "name": "CohereApi account"
         }
       }
     }
@@ -266,52 +260,8 @@
       "ai_outputParser": [
         [
           {
-            "node": "AI Agent",
+            "node": "Categorize Mail",
             "type": "ai_outputParser",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Groq Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Agent": {
-      "main": [
-        [
-          {
-            "node": "AI Agent1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Agent1": {
-      "main": [
-        [
-          {
-            "node": "Reply to a message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Groq Chat Model1": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent1",
-            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -321,30 +271,74 @@
       "ai_outputParser": [
         [
           {
-            "node": "AI Agent1",
+            "node": "Generating Meaningfull Reply",
             "type": "ai_outputParser",
             "index": 0
           }
         ]
       ]
     },
-    "Reply to a message": {
+    "Categorize Mail": {
       "main": [
         [
           {
-            "node": "Append row in sheet",
+            "node": "Generating Meaningfull Reply",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Gmail Trigger1": {
+    "Sending Back Message": {
       "main": [
         [
           {
-            "node": "AI Agent",
+            "node": "Appending New Data",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages": {
+      "main": [
+        [
+          {
+            "node": "Categorize Mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generating Meaningfull Reply": {
+      "main": [
+        [
+          {
+            "node": "Sending Back Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generating Meaningfull Reply",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Categorize Mail",
+            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -357,7 +351,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "6709c10f-c21e-4070-bdff-ae5588ff55a5",
+  "versionId": "d20880ac-915c-4d29-acf6-679b2345476e",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "a866c4e930c78360d2e170ee6fe77d5d599a2f6ec53d210be698e574f5a1ce5b"
