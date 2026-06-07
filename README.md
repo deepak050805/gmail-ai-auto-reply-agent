@@ -38,12 +38,6 @@ Gmail Trigger
 
 ---
 
-## Screenshots
-
-(Add screenshots here)
-
----
-
 ## Installation
 
 1. Import workflow JSON into n8n
